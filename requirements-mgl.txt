@@ -1,0 +1,5 @@
+# LLM clients and G2FUZZ command-line dependencies.
+openai
+zhipuai
+httpx
+tqdm

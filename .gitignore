@@ -1,0 +1,24 @@
+# Build outputs
+/afl-fuzz
+/afl-showmap
+/afl-tmin
+/afl-gotcpu
+/afl-analyze
+*.o
+*.so
+*.a
+*.pyc
+__pycache__/
+
+# Local runtime state and credentials
+.venv/
+.env
+openai_key.txt
+**/openai_key.txt
+out/
+generated_mutators/
+generated_format_executors/
+generated_seed_data/
+g2fuzz_output/
+runtime_state/
+template_generation_timing.jsonl
