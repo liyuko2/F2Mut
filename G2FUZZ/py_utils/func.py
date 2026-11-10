@@ -697,37 +697,21 @@ def mv_files(source_dir, target_dir, file_prefix):
     size_limit = 10 * 1024 * 1024  # 10MB = 10 * 1024 * 1024 bytes
 
     cnt = 1
-    for root, dirnames, filenames in os.walk(source_dir):
-        dirnames.sort()
-        filenames.sort()
+    for filename in os.listdir(source_dir):
+        source_path = os.path.join(source_dir, filename)
 
-        for filename in filenames:
-            source_path = os.path.join(root, filename)
+        # 检查文件大小，如果大于10MB，则删除该文件
+        if os.path.getsize(source_path) > size_limit:
+            os.remove(source_path)
+            print(f"---- Deleted large file {source_path} (greater than 10MB)")
+            continue  # 跳过该文件，避免继续移动
 
-            # 检查文件大小，如果大于10MB，则删除该文件
-            if os.path.getsize(source_path) > size_limit:
-                os.remove(source_path)
-                print(f"---- Deleted large file {source_path} (greater than 10MB)")
-                continue  # 跳过该文件，避免继续移动
-
-            file_ext = os.path.splitext(filename)[1]
-            target_path = os.path.join(target_dir, file_prefix + "_" + str(cnt) + file_ext)
-            cnt += 1
-
-            # Avoid collisions when earlier runs already produced the same seed name.
-            while os.path.exists(target_path):
-                target_path = os.path.join(target_dir, file_prefix + "_" + str(cnt) + file_ext)
-                cnt += 1
-
-            shutil.move(source_path, target_path)
-            print(f"---- Moved {source_path} to {target_path}")
-
-    for root, dirnames, _ in os.walk(source_dir, topdown=False):
-        for dirname in dirnames:
-            dir_path = os.path.join(root, dirname)
-            if not os.listdir(dir_path):
-                os.rmdir(dir_path)
-                print(f"---- Removed empty directory {dir_path}")
+        target_path = os.path.join(target_dir, file_prefix + "_" + str(cnt) + os.path.splitext(filename)[1])
+        cnt += 1
+        
+        # 移动文件
+        shutil.move(source_path, target_path)
+        print(f"---- Moved {source_path} to {target_path}")
 
 def count_files_in_directory(path):
     count = 0

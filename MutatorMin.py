@@ -2106,10 +2106,6 @@ def _record_mutatormin_stage_progress(stage_entry):
     return state
 
 
-def _seed_generation_enabled():
-    return _env_flag(SEED_GEN_ENV, True)
-
-
 def _seed_pool_enabled():
     return False
 
@@ -3776,93 +3772,6 @@ def _load_mutate_function(mutator_file):
         "mutate": mutate,
     }
     return mutate
-
-
-def _seed_generation_input_path(buf):
-    env_path = os.environ.get(SEED_INPUT_ENV)
-    if isinstance(env_path, str) and env_path.strip():
-        path = env_path.strip()
-        if not os.path.isabs(path):
-            path = os.path.join(_base_dir(), path)
-        if os.path.exists(path):
-            return os.path.abspath(path)
-
-    data = _coerce_mutated_buffer(buf, bytearray())
-    if not data:
-        return None
-    data = bytes(data[:MAX_OUTPUT_SIZE])
-    digest = hashlib.sha256(data).hexdigest()[:16]
-    path = os.path.join(_seed_input_dir(), f"{_seed_format()}_{digest}.bin")
-    if not os.path.exists(path):
-        try:
-            _ensure_mutators_path()
-            with open(path, "wb") as f:
-                f.write(data)
-        except OSError as e:
-            sys.stderr.write(f"[MutatorMin] Failed to write seed generator input: {e}\n")
-            return None
-    return path
-
-
-def _maybe_spawn_seed_generator(buf=None, force=False):
-    global __seed_no_found_counter__
-
-    if not _seed_generation_enabled():
-        return
-    if not _seed_async_generation_enabled():
-        return
-    if not _seed_llm_config_available():
-        return
-
-    worker = getattr(_maybe_spawn_seed_generator, "_worker", None)
-    if worker is not None and worker.poll() is None:
-        return
-
-    if force:
-        if __seed_no_found_counter__ > 0 and __seed_no_found_counter__ % BOOTSTRAP_RETRY_INTERVAL != 0:
-            return
-    elif __seed_no_found_counter__ <= MAX_EXEC_TIME:
-        return
-
-    source_mode = _seed_source_mode()
-    input_path = _seed_generation_input_path(buf) if source_mode == "sample" else None
-    if source_mode == "sample" and not input_path:
-        return
-
-    import subprocess
-
-    python_executable = os.environ.get("PYTHON", sys.executable)
-    if "python" not in os.path.basename(python_executable).lower():
-        python_executable = "python3"
-
-    cmd = [
-        python_executable,
-        os.path.join(_base_dir(), "seed_generator_builder.py"),
-        "--format", _seed_format(),
-        "--source-mode", source_mode,
-        "--output", _seed_generator_dir(),
-        "--seeds-output", _generated_seed_dir(),
-        "--metadata", _seed_features_path(),
-        "--max-files", str(_seed_max_files()),
-    ]
-    if source_mode == "sample":
-        cmd.extend(["--input", input_path])
-    try:
-        _ensure_mutators_path()
-        log_path = os.path.join(_seed_artifacts_dir(), "seed_generator_builder.log")
-        with open(log_path, "ab") as log_file:
-            log_file.write(b"\n[MutatorMin] spawn seed_generator_builder.py\n")
-            _maybe_spawn_seed_generator._worker = subprocess.Popen(
-                cmd,
-                cwd=_base_dir(),
-                stdout=log_file,
-                stderr=log_file,
-                start_new_session=True,
-                close_fds=True,
-            )
-        __seed_no_found_counter__ = 1
-    except OSError as e:
-        sys.stderr.write(f"[MutatorMin] Failed to spawn seed generator: {e}\n")
 
 
 def _read_seed_entry(entry, max_size):

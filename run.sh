@@ -2,4 +2,4 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$ROOT_DIR/run_fuzz.sh" "$@"
+exec "${PYTHON:-python3}" "$ROOT_DIR/run_pipeline.py" "$@"

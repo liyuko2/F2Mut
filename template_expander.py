@@ -1138,7 +1138,13 @@ def load_feature_context(feature_pool_path=None, seed_features_path=None):
                 pool = json.load(f)
             features = pool.get("features", pool) if isinstance(pool, dict) else pool
             if isinstance(features, dict):
-                features = list(features.values())
+                # Native G2FUZZ writes {feature_name: description_string}.
+                # Keep its names while also accepting the structured pool schema.
+                features = [
+                    {"id": name, "description": value}
+                    if isinstance(value, str) else value
+                    for name, value in features.items()
+                ]
             for feat in features:
                 if not isinstance(feat, dict):
                     continue

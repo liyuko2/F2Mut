@@ -4,9 +4,29 @@
 /afl-tmin
 /afl-gotcpu
 /afl-analyze
+/afl-cc
+/afl-clang*
+/afl-gcc*
+/afl-g++*
+/afl-c++*
+/afl-lto*
+/afl-ld-lto
+/G2FUZZ/afl-fuzz
+/G2FUZZ/afl-showmap
+/G2FUZZ/afl-tmin
+/G2FUZZ/afl-gotcpu
+/G2FUZZ/afl-analyze
+/G2FUZZ/afl-cc
+/G2FUZZ/afl-clang*
+/G2FUZZ/afl-gcc*
+/G2FUZZ/afl-g++*
+/G2FUZZ/afl-c++*
+/G2FUZZ/afl-lto*
+/G2FUZZ/afl-ld-lto
 *.o
 *.so
 *.a
+!/G2FUZZ/testcases/archives/common/ar/small_archive.a
 *.pyc
 __pycache__/
 
@@ -21,4 +41,5 @@ generated_format_executors/
 generated_seed_data/
 g2fuzz_output/
 runtime_state/
+/runs/
 template_generation_timing.jsonl
