@@ -4024,8 +4024,10 @@ def queue_new_entry(filename_new_queue, filename_orig_queue):
     # Called when a new test case is added to the queue
     del filename_orig_queue
     global __counter_stage__
-    queue_name = str(filename_new_queue)
-    _record_bottleneck_queue_growth(queue_name)
+    queue_path = str(filename_new_queue)
+    _record_bottleneck_queue_growth(queue_path)
+    # Stage and coverage markers belong to the filename, not its parent directories.
+    queue_name = os.path.basename(queue_path)
     if 'MutatorMin' in queue_name and isinstance(__counter_stage__, dict):
         __counter_stage__["direct_finds"] = int(__counter_stage__.get("direct_finds", 0) or 0) + 1
         if __counter_stage__.get("op_name") == "__template_executor__" and "+cov" in queue_name:

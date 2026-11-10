@@ -13,7 +13,7 @@
 | Built-in executors | elf_template_executor.py, format_template/ |
 | G2FUZZ native Python sources | G2FUZZ/program_gen.py, G2FUZZ/generator_mutation.py, G2FUZZ/py_utils/ |
 | G2FUZZ configuration | G2FUZZ/model_setting.json, G2FUZZ/program_to_format.json |
-| Entry, dependencies, licenses | run_fuzz.sh, requirements-mgl.txt, README.md, .gitignore, LICENSE, G2FUZZ/LICENSE, G2FUZZ/README.md |
+| Entry, dependencies, licenses | run.sh, run_fuzz.sh, requirements-mgl.txt, README.md, .gitignore, LICENSE, G2FUZZ/LICENSE, G2FUZZ/README.md |
 
 Removed: upstream test suites, benchmarks, example/custom mutators, dictionaries,
 large documentation trees, optional emulation backends, standalone analysis

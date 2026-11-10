@@ -19,6 +19,11 @@ tools, and upstream test suites are not included in this minimal distribution.
 Use the supported default target or explicit AFL++ binary/LLVM targets, not
 the upstream distribution/install/test targets that refer to omitted content.
 
+The local `afl-fuzz` built here is used by the **NoGen** version. The normal
+version uses `afl-fuzz` from a separately compiled, complete G2FUZZ checkout.
+The bundled `G2FUZZ/` directory contains Python sources only; it does not include
+the source tree needed to compile G2FUZZ's fuzzer.
+
 ## Template Pipeline
 
 ```sh
@@ -39,11 +44,47 @@ The expander retains its own existing CLI/environment configuration; use its
 ## Fuzzing
 
 Compile the target using the built afl-clang-fast/afl-clang-fast++ wrapper.
-Prepare non-empty input seeds, then run:
+Both versions require non-empty input seeds and load the MutatorMin Python
+module. `run.sh` and `run_fuzz.sh` provide the same launcher interface:
 
 ```sh
-./run_fuzz.sh ./seeds ./output -- ./instrumented-target @@
+./run.sh [--nogen] INPUT_DIR OUTPUT_DIR -- TARGET [TARGET_ARGS...]
 ```
+
+| Version | Launch option | Fuzzer binary | Native G2FUZZ generation |
+| --- | --- | --- | --- |
+| Normal | Default | `$G2FUZZ_DIR/afl-fuzz` | Passes `-k` with the G2FUZZ Python source directory |
+| NoGen | `--nogen` | `./afl-fuzz`, built from this repository's sources | Uses the local fuzzing loop and forces `AFL_LLM_SEED_GEN=0` |
+
+For the normal version, build a complete G2FUZZ checkout and set `G2FUZZ_DIR`
+to its directory. The G2FUZZ binary must include Python custom-mutator support.
+For example:
+
+```sh
+make -C /path/to/G2FUZZ source-only
+export G2FUZZ_DIR=/path/to/G2FUZZ
+./run.sh ./seeds ./output -- ./instrumented-target @@
+```
+
+`G2FUZZ_DIR` defaults to this repository's `G2FUZZ/` directory, so it must be
+set when the complete G2FUZZ build is elsewhere. In the current workspace,
+the existing compiled checkout is
+`/project/G2FUZZ/EVA_G2FUZZ/evaluation_path/G2FUZZ`.
+The normal launcher requires an executable `afl-fuzz` there and does not fall
+back to the local NoGen binary. `AFL_LLM_G2FUZZ_SOURCE_DIR` can override the
+native Python source directory passed to `-k`; it defaults to `G2FUZZ_DIR`.
+Prepare the initial G2FUZZ generator state and configure its model credentials
+as described in [the G2FUZZ instructions](G2FUZZ/README.md) before enabling its
+native generator workflow.
+
+For NoGen, use a separate output directory:
+
+```sh
+./run.sh --nogen ./seeds ./output-nogen -- ./instrumented-target @@
+```
+
+NoGen builds the local `afl-fuzz` with `make afl-fuzz` if it is missing.
+Both launch modes print the selected version and binary path at startup.
 
 The launcher selects MutatorMin, stores state under the output directory and
 uses elf_template_executor.py as fallback. For another format, set
@@ -74,7 +115,7 @@ For example, launch from F2Mut with normalized weighting:
 ```sh
 AFL_LLM_TEMPLATE_POOL=1 AFL_LLM_TEMPLATE_INITIAL_ONLY=0 \
 AFL_LLM_TEMPLATE_POOL_SCHEDULE=coverage_per_call \
-./run_fuzz.sh ./seeds ./output -- ./instrumented-target @@
+./run.sh ./seeds ./output -- ./instrumented-target @@
 ```
 
 An explicit schedule takes precedence over the old
@@ -90,8 +131,10 @@ AFL_LLM_RUNTIME_STATUS_WRITES=1 to persist runtime status.
 MutatorMin's scheduling, feedback, AFL++ callbacks, and C-side Python bridge are
 retained. Its optional seed-generation branch still requires
 seed_generator_builder.py and g2fuzz_adapter.py, so both remain.
-AFL_LLM_SEED_GEN defaults to 0. Generated G2FUZZ programs may need additional
-format-specific libraries; install those separately as needed.
+AFL_LLM_SEED_GEN controls the optional Python seed-generation branch and defaults
+to 0; NoGen always sets it to 0. This setting does not disable the native
+generator loop in the normal G2FUZZ binary. Generated G2FUZZ programs may need
+additional format-specific libraries; install those separately as needed.
 
 G2FUZZ/program_gen.py, generator_mutation.py, py_utils/, and native configuration
 files are retained. Run native entry points from G2FUZZ/ so relative config paths
