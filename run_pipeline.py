@@ -173,7 +173,7 @@ def check_native_launch(g2fuzz_dir, fuzz_dir):
     binary = Path(g2fuzz_dir) / "afl-fuzz"
     if not binary.is_file() or not os.access(binary, os.X_OK):
         raise ValueError(f"build native G2FUZZ first: make -C {g2fuzz_dir} afl-fuzz")
-    # Upstream's runtime generator uses an unquoted system() command.
+    # Native G2FUZZ's runtime generator uses an unquoted system() command.
     for path in (g2fuzz_dir, fuzz_dir):
         if shlex.quote(str(path)) != str(path):
             raise ValueError("native G2FUZZ runtime requires source/output paths without shell metacharacters or spaces")
